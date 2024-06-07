@@ -1,0 +1,15 @@
+apiVersion: skaffold/v3alpha1
+kind: Config
+metadata:
+  name: test-app-delivery
+profiles:
+  - name: non-prod
+    manifests:
+      rawYaml:
+        - services/non-production.yaml
+  - name: prod
+    manifests:
+      rawYaml:
+        - services/production.yaml
+deploy:
+  cloudrun: {}

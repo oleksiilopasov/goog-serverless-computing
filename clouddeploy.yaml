@@ -1,0 +1,65 @@
+# This Cloud Deploy configuration file is a configuration sample for Cloud Run targets
+# For simplisity the delivery pipeline and target resources are defined in a single file, however they can be separated.
+# See https://cloud.google.com/deploy/docs/config-files for a full configuration reference
+
+# Delivery pipeline config
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: test-app-pipeline # Must be unique per project and location
+  annotations: # User-defined annotations (optional)
+    anno: test-app
+  labels: # User-defined labels (optional)
+    pipe: test-app
+description: Test application deployment pipeline
+suspended: false
+serialPipeline:
+  stages:
+    - targetId: non-production
+      profiles: [non-prod]
+      strategy:
+        standard: # Simple deployment to the specified targets (blue-green)
+          verify: false # Deployment verification (requires additional Skaffold confguration)
+          predeploy: # Run hooks BEFORE deploying
+            actions: []
+          postdeploy: # Run hooks AFTER deploying
+            actions: []
+    - targetId: production
+      profiles: [prod]
+      strategy:
+        canary: # Step-by-step deployment introducing changes within the specified progression of percentages
+          runtimeConfig: # Example of fully-automated canary deployment to Cloud Run
+            cloudRun:
+              automaticTrafficControl: true
+          canaryDeployment:
+            percentages: [25, 50, 75]
+            verify: false
+
+---
+# Example of Cloud Run targets for different profiles
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: non-production
+  annotations: # User-defined annotations (optional)
+    anno: test-app
+  labels: # User-defined labels (optional)
+    pipe: test-app
+description: Test Cloud Run service for non-production environment
+requireApproval: false
+run:
+  location: projects/vaulted-bazaar-423509-t2/locations/us-east1
+
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: production
+  annotations: # User-defined annotations (optional)
+    anno: test-app
+  labels: # User-defined labels (optional)
+    pipe: test-app
+description: Test Cloud Run service for production environment
+requireApproval: true
+run:
+  location: projects/vaulted-bazaar-423509-t2/locations/us-east1

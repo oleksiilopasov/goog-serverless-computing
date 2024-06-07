@@ -1,0 +1,9 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: test-app-service-prod
+spec:
+  template:
+    spec:
+      containers:
+      - image: app
