@@ -3,6 +3,10 @@ kind: Config
 metadata:
   name: test-app-delivery
 profiles:
+  - name: dev
+    manifests:
+      rawYaml:
+        - services/development.yaml
   - name: non-prod
     manifests:
       rawYaml:

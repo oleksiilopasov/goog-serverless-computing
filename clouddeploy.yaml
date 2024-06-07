@@ -15,6 +15,15 @@ description: Test application deployment pipeline
 suspended: false
 serialPipeline:
   stages:
+    - targetId: development
+      profiles: [dev]
+      strategy:
+        standard: 
+          verify: false 
+          predeploy:
+            actions: []
+          postdeploy:
+            actions: []
     - targetId: non-production
       profiles: [non-prod]
       strategy:
@@ -61,5 +70,19 @@ metadata:
     pipe: test-app
 description: Test Cloud Run service for production environment
 requireApproval: true
+run:
+  location: projects/vaulted-bazaar-423509-t2/locations/us-east1
+
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: development
+  annotations: # User-defined annotations (optional)
+    anno: test-app
+  labels: # User-defined labels (optional)
+    pipe: test-app
+description: Test Cloud Run service for development environment
+requireApproval: false
 run:
   location: projects/vaulted-bazaar-423509-t2/locations/us-east1

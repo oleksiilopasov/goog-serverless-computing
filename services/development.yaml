@@ -1,0 +1,71 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: test-app-service-dev
+  # annotations:
+  #   run.googleapis.com/launch-stage: LAUNCH_STAGE
+  #   run.googleapis.com/description: DESCRIPTION
+  #   run.googleapis.com/ingress: INGRESS
+  #   run.googleapis.com/binary-authorization: POLICY
+  #   run.googleapis.com/binary-authorization-breakglass: JUSTIFICATION
+spec:
+  template:
+    metadata:
+      # name: REVISION_NAME
+      annotations:
+        # autoscaling.knative.dev/minScale: MIN_INSTANCES
+        # autoscaling.knative.dev/maxScale: MAX_INSTANCES
+        # run.googleapis.com/cpu-throttling: CPU_ALLOCATION
+        # run.googleapis.com/startup-cpu-boost: CPU_BOOST
+        # run.googleapis.com/sessionAffinity: SESSION_AFFINITY
+        # run.googleapis.com/cloudsql-instances: CLOUD_SQL_CONNECTION
+        # run.googleapis.com/execution-environment: EXECUTION_ENVIRONMENT
+        run.googleapis.com/vpc-access-connector: test-app-conn-01
+        # run.googleapis.com/vpc-access-egress: EGRESS
+        # run.googleapis.com/network-interfaces: VPC_NETWORK_SETTINGS_IN_JSON
+        # run.googleapis.com/encryption-key: CMEK
+        # run.googleapis.com/custom-audiences: '["AUDIENCE1","AUDIENCE2"]'
+        # run.googleapis.com/container-dependencies: CONTAINER_START_ORDER
+        # run.googleapis.com/minScale: SERVICE_MIN_INSTANCES
+    spec:
+      # containerConcurrency: MAX_CONCURRENCY
+      # timeoutSeconds: REQUEST_TIMEOUT
+      serviceAccountName: test-app-id@vaulted-bazaar-423509-t2.iam.gserviceaccount.com
+      containers:
+      - image: app
+        ports:
+        - name: HTTP1
+          containerPort: 8080
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: db_password
+        - name: DB_USERNAME
+          value: postgres
+        - name: DB_HOST
+          value: 10.190.96.3
+        - name: DB_NAME
+          value: test_app
+        - name: CLOUD_STORAGE_BUCKET
+          value: test-app-prod-bucket
+        resources:
+          limits:
+            cpu: 1
+            memory: 128m
+        startupProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 2
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 2
+          periodSeconds: 10
