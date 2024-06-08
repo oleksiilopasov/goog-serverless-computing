@@ -2,7 +2,11 @@ name: Build and publish to Artifact Registry
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+    paths:
+      - "src/**"
+  workflow_dispatch:
 
 jobs:
   setup-build-publish:
@@ -11,57 +15,56 @@ jobs:
     environment: development
 
     permissions:
-      contents: "read"
-      id-token: "write"
+      contents: read
+      id-token: write
 
     env:
       ARTIFACT_REGISTRY_REPO: ${{ vars.ARTIFACT_REGISTRY_REPO }}
-      IMAGE: ${{ vars.IMAGE }}
+      IMAGE_NAME: ${{ vars.IMAGE_NAME }}
 
     outputs:
-      image: ${{ steps.publish.outputs.image }}
+      image_uri: ${{ steps.publish.outputs.image_uri }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add GitHub short SHA
-        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+      - name: Export GitHub short SHA
+        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       # Configure Workload Identity Federation and generate an access token.
-      - id: "auth"
-        name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
         with:
-          token_format: "access_token"
+          token_format: access_token
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.IAM_SERVICE_ACCOUNT }}
 
       - name: Authorize Docker
         run: |-
-          echo ${{steps.auth.outputs.access_token}} | \
+          echo ${{ steps.auth.outputs.access_token }} | \
             docker login -u oauth2accesstoken --password-stdin https://$(echo $ARTIFACT_REGISTRY_REPO | awk -F '/' '{print $1}')
 
       # Build the Docker image
       - name: Build the Docker image
         run: |-
           docker build --no-cache \
-            --tag "$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA" \
-            --build-arg SHORT_SHA="$SHORT_SHA" \
+            --tag $ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:$SHORT_SHA \
             --file ./src/Dockerfile ./src
 
       # Push the Docker image to Artifact Registry
       - name: Publish to the registry
         id: publish
         run: |-
-          docker push "$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA" && \
-          echo "image=$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA" >> $GITHUB_OUTPUT
+          docker push $ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:$SHORT_SHA && \
+            echo "image_uri=$ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:$SHORT_SHA" >> $GITHUB_OUTPUT
 
       # Push the Docker image to Artifact Registry as latest
       - name: Publish as latest
         run: |-
-          docker tag "$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA" "$ARTIFACT_REGISTRY_REPO/$IMAGE:latest" && \
-            docker push "$ARTIFACT_REGISTRY_REPO/$IMAGE:latest"
+          docker tag $ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:$SHORT_SHA $ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:latest && \
+            docker push $ARTIFACT_REGISTRY_REPO/$IMAGE_NAME:latest
 
   create-release:
     name: Create Release
@@ -70,31 +73,31 @@ jobs:
     environment: development
 
     permissions:
-      contents: "read"
-      id-token: "write"
+      contents: read
+      id-token: write
 
     env:
       DELIVERY_PIPELINE: ${{ vars.DELIVERY_PIPELINE }}
       LOCATION: ${{ vars.LOCATION }}
-      IMAGE: ${{needs.setup-build-publish.outputs.image}}
+      IMAGE: ${{ needs.setup-build-publish.outputs.image_uri }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       # Configure Workload Identity Federation and generate an access token.
-      - id: "auth"
-        name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
         with:
-          token_format: "access_token"
+          token_format: access_token
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.IAM_SERVICE_ACCOUNT }}
 
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v2"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: "Create a release"
+      - name: Create release
         run: |-
           RELEASE_TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
           gcloud deploy releases create release-$RELEASE_TIMESTAMP \
