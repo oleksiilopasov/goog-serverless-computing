@@ -12,7 +12,7 @@ func main() {
 
 	// Route for info page
 	router.GET("/about", func(c *gin.Context) {
-		c.String(http.StatusOK, "This is a Go web application for testing purposes")
+		c.String(http.StatusOK, "This is a Go web application for testing purposes. Not for using in production.")
 	})
 
 	// Route for file upload
