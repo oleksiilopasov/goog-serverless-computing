@@ -1,0 +1,52 @@
+name: Build and publish to Artifact Registry
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  setup-build-publish:
+    name: Setup, Build and Publish
+    runs-on: ubuntu-latest
+    environment: development
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    env:
+      ARTIFACT_REGISTRY_REPO: ${{ vars.ARTIFACT_REGISTRY_REPO }}
+      IMAGE: ${{ vars.IMAGE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add GitHub short SHA
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+
+      # Configure Workload Identity Federation and generate an access token.
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v0"
+        with:
+          token_format: "access_token"
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.IAM_SERVICE_ACCOUNT }}
+
+      - name: Authorize Docker
+        run: |-
+          echo ${{steps.auth.outputs.access_token}} | \
+            docker login -u oauth2accesstoken --password-stdin https://$(echo $ARTIFACT_REGISTRY_REPO | awk -F '/' '{print $1}')
+
+      # Build the Docker image
+      - name: Build the Docker image
+        run: |-
+          docker build \
+            --tag "$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA" \
+            --build-arg SHORT_SHA="$SHORT_SHA"
+            .
+      # Push the Docker image to Google Artifact Registry
+      - name: Publish to the registry
+        run: |-
+          docker push "$ARTIFACT_REGISTRY_REPO/$IMAGE:$SHORT_SHA"

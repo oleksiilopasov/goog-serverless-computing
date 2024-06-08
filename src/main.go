@@ -10,6 +10,11 @@ import (
 func main() {
 	router := gin.Default()
 
+	// Route for info page
+	router.GET("/about", func(c *gin.Context) {
+		c.String(http.StatusOK, "This is a Go web application for testing purposes")
+	})
+
 	// Route for file upload
 	router.POST("/upload", handlers.UploadHandler)
 

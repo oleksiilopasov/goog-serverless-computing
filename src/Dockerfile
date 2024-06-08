@@ -1,33 +1,21 @@
 # Start from the official Go image
 FROM golang:1.22-alpine AS build
-
+# Copy the source code directory
+COPY . /src
 # Set the current working directory inside the container
-WORKDIR /app
-
-# Copy the go.mod and go.sum files
-COPY go.mod .
-COPY go.sum .
-
+WORKDIR /src
 # Download dependencies
 RUN go mod download
-
-# Copy the source code directory
-COPY src/ ./src
-
 # Build the Go application
-RUN go build -o app ./src
+RUN go build -o /app/smarty
 
 # Start a new stage from scratch
 FROM alpine:latest
-
 # Set the current working directory inside the container
-WORKDIR /root/
-
+WORKDIR /app
 # Copy the executable from the previous stage
-COPY --from=build /app/app .
-
+COPY --from=build /app/smarty .
 # Expose port 8080
 EXPOSE 8080
-
 # Command to run the executable
-CMD ["./app"]
+CMD ["./smarty"]
