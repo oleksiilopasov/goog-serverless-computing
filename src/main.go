@@ -19,7 +19,7 @@ func main() {
 	router.POST("/upload", handlers.UploadHandler)
 
 	// Route for liveness probe
-	router.GET("/healthz", func(c *gin.Context) {
+	router.GET("/status", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
 	})
 
