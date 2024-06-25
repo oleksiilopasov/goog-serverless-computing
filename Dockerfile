@@ -1,7 +1,7 @@
 # Start from the official Go image
 FROM golang:1.22-alpine AS build
 # Copy the source code directory
-COPY . /src
+COPY src/ /src
 # Set the current working directory inside the container
 WORKDIR /src
 # Download dependencies
