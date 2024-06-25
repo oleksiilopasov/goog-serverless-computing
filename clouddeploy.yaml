@@ -61,4 +61,4 @@ metadata:
 description: Test Cloud Run service for production environment
 requireApproval: true
 run:
-  location: projects/vaulted-bazaar-423509-t2/locations/us-central1
+  location: projects/vaulted-bazaar-423509-t2/locations/us-east1
