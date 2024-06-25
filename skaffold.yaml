@@ -1,12 +1,8 @@
 apiVersion: skaffold/v3alpha1
 kind: Config
 metadata:
-  name: test-app-delivery
+  name: test-app-service-delivery
 profiles:
-  - name: dev
-    manifests:
-      rawYaml:
-        - services/development.yaml
   - name: non-prod
     manifests:
       rawYaml:
