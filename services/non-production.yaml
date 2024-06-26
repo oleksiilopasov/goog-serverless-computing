@@ -10,40 +10,42 @@ spec:
     spec:
       serviceAccountName: test-app-id@vaulted-bazaar-423509-t2.iam.gserviceaccount.com
       containers:
-      - image: app
-        ports:
-        - name: http1
-          containerPort: 8080
-        env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: latest
-              name: db_password
-        - name: DB_USERNAME
-          value: postgres
-        - name: DB_HOST
-          value: 10.190.96.3
-        - name: DB_NAME
-          value: test_app
-        - name: CLOUD_STORAGE_BUCKET
-          value: test-app-prod-bucket
-        resources:
-          limits:
-            cpu: 1
-            memory: 128Mi
-        startupProbe:
-          tcpSocket:
-            port: 8080
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          failureThreshold: 2
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /status
-            port: 8080
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          failureThreshold: 2
-          periodSeconds: 10
+        - image: app
+          ports:
+            - name: http1
+              containerPort: 8080
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: latest
+                  name: db_password
+            - name: DB_USERNAME
+              value: postgres
+            - name: DB_HOST
+              value: 10.190.96.3
+            - name: DB_PORT
+              value: 5432
+            - name: DB_NAME
+              value: test_app
+            - name: CLOUD_STORAGE_BUCKET
+              value: test-app-prod-bucket
+          resources:
+            limits:
+              cpu: 1
+              memory: 128Mi
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
+            periodSeconds: 10

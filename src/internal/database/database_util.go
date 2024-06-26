@@ -9,8 +9,8 @@ import (
 )
 
 func RecordUploadInDatabase(cfg *config.Config, fileName string, fileSize int64) error {
-	connString := fmt.Sprintf("postgresql://%s:%s@%s/%s",
-		cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBName)
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
