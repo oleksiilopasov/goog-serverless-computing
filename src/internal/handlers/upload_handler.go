@@ -5,10 +5,21 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"onefor.fun/gosmarty/utils"
+	"onefor.fun/gosmarty/internal/database"
+	"onefor.fun/gosmarty/internal/storage"
+	"onefor.fun/gosmarty/pkg/config"
 )
 
-func UploadHandler(c *gin.Context) {
+type UploadHandler struct {
+	cfg *config.Config
+}
+
+func NewUploadHandler(cfg *config.Config) gin.HandlerFunc {
+	handler := &UploadHandler{cfg: cfg}
+	return handler.Upload
+}
+
+func (h *UploadHandler) Upload(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("Error: %s", err.Error()))
@@ -18,13 +29,13 @@ func UploadHandler(c *gin.Context) {
 
 	// Upload the file to Cloud Storage
 	objectName := header.Filename
-	if err := utils.UploadToCloudStorage(objectName, file); err != nil {
+	if err := storage.UploadToCloudStorage(h.cfg.CloudStorageBucket, objectName, file); err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Error uploading file: %s", err.Error()))
 		return
 	}
 
 	// Record information about the uploaded file in PostgreSQL
-	if err := utils.RecordUploadInDatabase(objectName, header.Size); err != nil {
+	if err := database.RecordUploadInDatabase(h.cfg, objectName, header.Size); err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Error recording upload in database: %s", err.Error()))
 		return
 	}

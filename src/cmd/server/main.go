@@ -4,10 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"onefor.fun/gosmarty/handlers"
+	"onefor.fun/gosmarty/internal/handlers"
+	"onefor.fun/gosmarty/pkg/config"
 )
 
 func main() {
+	cfg := config.LoadConfig()
+
 	router := gin.Default()
 
 	// Route for info page
@@ -16,7 +19,7 @@ func main() {
 	})
 
 	// Route for file upload
-	router.POST("/upload", handlers.UploadHandler)
+	router.POST("/upload", handlers.NewUploadHandler(cfg))
 
 	// Route for liveness probe
 	router.GET("/status", func(c *gin.Context) {

@@ -7,7 +7,7 @@ WORKDIR /src
 # Download dependencies
 RUN go mod download
 # Build the Go application
-RUN go build -o /app/smarty
+RUN go build -C cmd/server -o /app/smarty
 
 # Start a new stage from scratch
 FROM alpine:latest
